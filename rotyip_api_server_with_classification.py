@@ -2,6 +2,7 @@ import requests
 from flask import Flask, request, jsonify
 from bs4 import BeautifulSoup
 from datetime import datetime
+from flask_cors import CORS
 
 app = Flask(__name__)
 
