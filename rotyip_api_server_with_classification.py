@@ -1,10 +1,11 @@
 import requests
-from flask import Flask, request, jsonify
+from flask import Flask
+from flask_cors import CORS, request, jsonify
 from bs4 import BeautifulSoup
 from datetime import datetime
-from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 TELEGRAM_TOKEN = "7682246390:AAFRw4n3DA8FPjmfPs3ndo6OrUlIWR4Odg0"
 CHAT_ID = "-1002612909844"
@@ -84,6 +85,4 @@ def check_ip():
     })
 
 if __name__ == "__main__":
-    import os
-port = int(os.environ.get("PORT", 5000))
-app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
