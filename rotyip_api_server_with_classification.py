@@ -1,6 +1,7 @@
 import requests
 from flask import Flask
-from flask_cors import CORS, request, jsonify
+from flask import request, jsonify
+from flask_cors import CORS
 from bs4 import BeautifulSoup
 from datetime import datetime
 
