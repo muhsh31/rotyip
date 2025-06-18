@@ -82,6 +82,9 @@ def check_ip():
         "checked_at": datetime.utcnow().isoformat(),
         "threat_score": threat,
         "threat_level": threat_level,
+        "country": "-",
+        "city": "-",
+        "timezone": "-",
         "flags": result.get("flags", [])
     })
 
