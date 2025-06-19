@@ -5,8 +5,8 @@ fetch('https://api.ipify.org?format=json')
   .then(ipData => {
     const userIP = ipData.ip;
 
-    // Fetch from /api/check using the detected IP
-    fetch('/api/check?ip=' + userIP)
+    // Fetch from Render backend API
+    fetch('https://rotyip.onrender.com/api/check?ip=' + userIP)
       .then(response => response.json())
       .then(data => {
         let html = '';
