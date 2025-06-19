@@ -5,6 +5,7 @@ from flask_cors import CORS
 from datetime import datetime
 import itertools
 import os
+import random
 
 app = Flask(__name__)
 CORS(app)
@@ -37,13 +38,53 @@ def send_telegram_message(text):
     except:
         pass
 
+# دالة استخراج عنوان حقيقي من ZIP
+def get_street_address_from_zip(zip_code, country_code="us"):
+    try:
+        zip_resp = requests.get(f"https://api.zippopotam.us/{country_code}/{zip_code}", timeout=5)
+        if zip_resp.status_code != 200:
+            return None
+
+        zip_data = zip_resp.json()
+        lat = zip_data["places"][0]["latitude"]
+        lon = zip_data["places"][0]["longitude"]
+        city = zip_data["places"][0]["place name"]
+        state = zip_data["places"][0]["state abbreviation"]
+        country = zip_data["country"]
+
+        query = f"""
+        [out:json];
+        way(around:1500,{lat},{lon})["highway"];
+        out tags;
+        """
+        overpass_url = "https://overpass-api.de/api/interpreter"
+        resp = requests.post(overpass_url, data={"data": query}, timeout=10)
+        if resp.status_code != 200:
+            return None
+
+        results = resp.json()
+        street_names = list({
+            el["tags"]["name"]
+            for el in results["elements"]
+            if "tags" in el and "name" in el["tags"]
+        })
+
+        if not street_names:
+            return None
+
+        street = random.choice(street_names)
+        number = random.randint(100, 999)
+        return f"{number} {street}, {city}, {state} {zip_code}, {country}"
+
+    except Exception as e:
+        return None
+
 @app.route("/api/check")
 def check_ip():
     ip = request.args.get("ip", "").strip()
     if not ip:
         return jsonify({"error": "Missing IP"}), 400
 
-    # إذا تم فحص الـ IP مسبقًا، أعد نفس النتيجة
     if ip in ip_cache:
         return jsonify(ip_cache[ip])
 
@@ -54,13 +95,11 @@ def check_ip():
             response = requests.get(url, timeout=8)
             data = response.json()
 
-            # إذا تم حظر المفتاح، أرسل تنبيه وجرب مفتاح آخر
             if not data.get("success", True):
                 if "limit" in data.get("message", "").lower():
                     send_telegram_message(f"🚫 <b>IPQS API Blocked</b>\nKey ending in ...{key[-4:]}")
-                    continue  # جرّب مفتاحًا آخر
+                    continue
 
-            # تحليل النتيجة
             score = int(data.get("fraud_score", 0))
             threat_level = "clean"
             if score > 50:
@@ -68,11 +107,14 @@ def check_ip():
             elif score > 27:
                 threat_level = "suspicious"
 
+            zipcode = data.get("zipcode", "-")
+            street_address = get_street_address_from_zip(zipcode)
+
             result = {
                 "ip": ip,
                 "country": data.get("country_code", "-"),
                 "city": data.get("city", "-"),
-                "zipcode": data.get("zipcode", "-"),
+                "zipcode": zipcode,
                 "timezone": data.get("timezone", "-"),
                 "isp": data.get("ISP", "-"),
                 "threat_level": threat_level,
@@ -82,21 +124,19 @@ def check_ip():
                 "tor": data.get("tor", False),
                 "connection_type": data.get("connection_type", "-"),
                 "organization": data.get("organization", "-"),
-                "datetime": datetime.utcnow().isoformat()
+                "datetime": datetime.utcnow().isoformat(),
+                "street_address": street_address or "Not Available"
             }
 
-            # حفظ النتيجة مؤقتًا
             ip_cache[ip] = result
 
-            # إرسال تنبيه عند الخطر
             if threat_level in ["suspicious", "dangerous"]:
                 send_alert(ip, data, threat_level)
 
-
             return jsonify(result)
 
-        except Exception as e:
-            continue  # جرب مفتاح آخر إذا فشل الطلب
+        except Exception:
+            continue
 
     return jsonify({"error": "All API keys failed"}), 503
 
