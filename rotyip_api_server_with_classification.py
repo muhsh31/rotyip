@@ -89,7 +89,21 @@ def check_ip():
 
             # إرسال تنبيه عند الخطر
             if threat_level in ["suspicious", "dangerous"]:
-                send_telegram_message(f"🚨 <b>IP Alert</b>\n<b>IP:</b> {ip}\n<b>Threat:</b> {threat_level}\n<b>Score:</b> {score}")
+                
+message = f"""
+🚨 <b>IP Alert</b>
+<b>IP:</b> {ip}
+<b>Country:</b> {data.get("country_code", "-")} 🇺🇸
+<b>City:</b> {data.get("city", "-")} 🏙️
+<b>Time Zone:</b> {data.get("timezone", "-")} ⏰
+"""
+if data.get("zipcode", "-") not in ["-", "", None]:
+    message += f"<b>ZIP Code:</b> {data.get('zipcode')} 📍\n"
+message += f"<b>Threat Level:</b> {threat_level} ⚠️\n"
+message += f"<b>Score:</b> {score} 🔥"
+
+send_telegram_message(message.strip())
+
 
             return jsonify(result)
 
