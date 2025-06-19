@@ -1,4 +1,5 @@
 import requests
+from alert_telegram_rotyip import send_alert
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
@@ -89,20 +90,7 @@ def check_ip():
 
             # إرسال تنبيه عند الخطر
             if threat_level in ["suspicious", "dangerous"]:
-                
-message = f"""
-🚨 <b>IP Alert</b>
-<b>IP:</b> {ip}
-<b>Country:</b> {data.get("country_code", "-")} 🇺🇸
-<b>City:</b> {data.get("city", "-")} 🏙️
-<b>Time Zone:</b> {data.get("timezone", "-")} ⏰
-"""
-if data.get("zipcode", "-") not in ["-", "", None]:
-    message += f"<b>ZIP Code:</b> {data.get('zipcode')} 📍\n"
-message += f"<b>Threat Level:</b> {threat_level} ⚠️\n"
-message += f"<b>Score:</b> {score} 🔥"
-
-send_telegram_message(message.strip())
+                send_alert(ip, data, threat_level)
 
 
             return jsonify(result)
