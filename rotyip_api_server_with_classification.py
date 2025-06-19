@@ -108,6 +108,15 @@ def check_ip():
                 threat_level = "suspicious"
 
             zipcode = data.get("zipcode", "-")
+
+            # ✅ إذا لم يتوفر ZIP من IPQS – استخدم ip-api.com كبديل
+            if not zipcode or zipcode == "-":
+                try:
+                    fallback = requests.get(f"http://ip-api.com/json/{ip}", timeout=5).json()
+                    zipcode = fallback.get("zip", "-")
+                except:
+                    pass
+
             street_address = get_street_address_from_zip(zipcode)
 
             result = {
