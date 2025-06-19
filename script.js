@@ -1,31 +1,21 @@
+window.onload = async function () {
+  try {
+    const ipData = await fetch("https://api64.ipify.org?format=json").then(r => r.json());
+    const ip = ipData.ip;
+    document.getElementById("ip").textContent = ip;
 
-// Get user IP first
-fetch('https://api.ipify.org?format=json')
-  .then(res => res.json())
-  .then(ipData => {
-    const userIP = ipData.ip;
+    const response = await fetch("https://rotyip.onrender.com/api/check?ip=" + ip);
+    const data = await response.json();
 
-    // Fetch from Render backend API
-    fetch('https://rotyip.onrender.com/api/check?ip=' + userIP)
-      .then(response => response.json())
-      .then(data => {
-        let html = '';
-        html += `<p class="result-item"><span>IP:</span> ${data.ip}</p>`;
-        html += `<p class="result-item"><span>Country:</span> ${data.country}</p>`;
-        html += `<p class="result-item"><span>City:</span> ${data.city}</p>`;
+    document.getElementById("country").textContent = data.country || "-";
+    document.getElementById("city").textContent = data.city || "-";
+    document.getElementById("timezone").textContent = data.timezone || "-";
+    document.getElementById("threat").textContent = data.threat_level || "-";
 
-        if (data.zipcode && data.zipcode !== "-") {
-          html += `<p class="result-item"><span>ZIP Code:</span> ${data.zipcode}</p>`;
-        }
-        if (data.fraud_score !== undefined) {
-          html += `<p class="result-item"><span>Score:</span> ${data.fraud_score}</p>`;
-        }
-
-        html += `<p class="result-item"><span>Threat Level:</span> ${data.threat_level}</p>`;
-        document.getElementById("result").innerHTML = html;
-      });
-  })
-  .catch(error => {
-    document.getElementById("result").innerHTML = "<p class='result-item'>Failed to fetch IP or data.</p>";
-    console.error("Auto-check failed:", error);
-  });
+    if (typeof applyThreatColor === "function") {
+      applyThreatColor(data.threat_level);
+    }
+  } catch (e) {
+    console.error("Auto-check failed:", e);
+  }
+};
