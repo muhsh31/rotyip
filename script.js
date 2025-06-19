@@ -15,7 +15,9 @@ fetch('https://api.ipify.org?format=json')
         html += `<p><strong>City:</strong> ${data.city}</p>`;
 
         if (data.zipcode && data.zipcode !== "-") {
-          html += `<p><strong>ZIP Code:</strong> ${data.zipcode}</p>`;
+        html += `<p><strong>ZIP Code:</strong> ${data.zipcode}</p>`;
+        } else {
+        html += `<p><strong>ZIP Code:</strong> Not Available</p>`;
         }
         if (data.fraud_score !== undefined) {
           html += `<p><strong>Score:</strong> ${data.fraud_score}</p>`;
