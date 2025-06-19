@@ -1,21 +1,20 @@
-window.onload = async function () {
-  try {
-    const ipData = await fetch("https://api64.ipify.org?format=json").then(r => r.json());
-    const ip = ipData.ip;
-    document.getElementById("ip").textContent = ip;
 
-    const response = await fetch("https://rotyip.onrender.com/api/check?ip=" + ip);
-    const data = await response.json();
+// Example fetch call with injection of ZIP Code and Score display logic
+fetch('/api/check?ip=' + userIP)
+  .then(response => response.json())
+  .then(data => {
+    let html = '';
+    html += `<p class="result-item"><span>IP:</span> ${data.ip}</p>`;
+    html += `<p class="result-item"><span>Country:</span> ${data.country}</p>`;
+    html += `<p class="result-item"><span>City:</span> ${data.city}</p>`;
 
-    document.getElementById("country").textContent = data.country || "-";
-    document.getElementById("city").textContent = data.city || "-";
-    document.getElementById("timezone").textContent = data.timezone || "-";
-    document.getElementById("threat").textContent = data.threat_level || "-";
-
-    if (typeof applyThreatColor === "function") {
-      applyThreatColor(data.threat_level);
+    if (data.zipcode && data.zipcode !== "-") {
+      html += `<p class="result-item"><span>ZIP Code:</span> ${data.zipcode}</p>`;
     }
-  } catch (e) {
-    console.error("Auto-check failed:", e);
-  }
-};
+    if (data.fraud_score !== undefined) {
+      html += `<p class="result-item"><span>Score:</span> ${data.fraud_score}</p>`;
+    }
+
+    html += `<p class="result-item"><span>Threat Level:</span> ${data.threat_level}</p>`;
+    document.getElementById("result").innerHTML = html;
+  });
