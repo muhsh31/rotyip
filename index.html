@@ -227,7 +227,7 @@ function generateAndCheckEmail() {
 
   resultBox.innerHTML = `⏳ يتم فحص <b>${email}</b> ...`;
 
-  fetch(`/api/email-check?email=${encodeURIComponent(email)}`)
+  fetch(`https://rotyip.onrender.com/api/email-check?email=${encodeURIComponent(email)}`)
     .then(res => res.json())
     .then(data => {
     let status = data.status || "unknown";
