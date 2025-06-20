@@ -87,8 +87,26 @@
     📬 أدخل الرمز البريدي لعرض الشوارع...
   </div>
 </section>
+<div id="copyToast" style="
+  visibility: hidden;
+  min-width: 220px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  padding: 10px;
+  position: fixed;
+  z-index: 9999;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  font-size: 14px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+">
+  ✅ تم نسخ العنوان إلى الحافظة
+</div>
 <footer>
-    © 2025 rotyip.com — All rights reserved.
+  © 2025 rotyip.com — All rights reserved.
 </footer>
 <script>
   async function lookupIP() {
@@ -113,7 +131,13 @@
 <script src="script.js"></script>
 <script>
   function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => alert("✅ تم نسخ العنوان:" + text));
+    navigator.clipboard.writeText(text).then(() => {
+      const toast = document.getElementById("copyToast");
+      toast.style.visibility = "visible";
+      setTimeout(() => {
+        toast.style.visibility = "hidden";
+      }, 2000);
+    });
   }
 
   function lookupZipStreets() {
