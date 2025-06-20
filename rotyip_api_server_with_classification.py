@@ -8,9 +8,15 @@ import os
 import random
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# قائمة المفاتيح
+@app.after_request
+def apply_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    return response
+
 IPQS_KEYS = [
     "dgHCQ0L7RO4zy5ER6lqbjIQhQZHIkSw0",
     "D4tu8VKYrdeM9hEVB6z3y3LUldTQhSgH",
@@ -19,10 +25,8 @@ IPQS_KEYS = [
 ]
 KEYS = itertools.cycle(IPQS_KEYS)
 
-# تخزين مؤقت لنتائج الفحص
 ip_cache = {}
 
-# إعدادات تيليغرام
 TELEGRAM_TOKEN = "7682246390:AAFRw4n3DA8FPjmfPs3ndo6OrUlIWR4Odg0"
 CHAT_ID = "-1002612909844"
 
@@ -38,7 +42,6 @@ def send_telegram_message(text):
     except:
         pass
 
-# ✅ Endpoint لفحص الإيميلات من الخادم
 @app.route("/api/email-check")
 def check_email():
     email = request.args.get("email", "").strip()
@@ -55,7 +58,6 @@ def check_email():
     except Exception as e:
         return jsonify({"error": "API Error", "details": str(e)}), 500
 
-# دالة استخراج عنوان حقيقي من ZIP
 def get_street_address_from_zip(zip_code, country_code="us"):
     try:
         zip_resp = requests.get(f"https://api.zippopotam.us/{country_code}/{zip_code}", timeout=5)
@@ -93,7 +95,7 @@ def get_street_address_from_zip(zip_code, country_code="us"):
         number = random.randint(100, 999)
         return f"{number} {street}, {city}, {state} {zip_code}, {country}"
 
-    except Exception as e:
+    except Exception:
         return None
 
 @app.route("/api/check")
@@ -126,7 +128,6 @@ def check_ip():
 
             zipcode = data.get("zipcode", "-")
 
-            # ✅ إذا لم يتوفر ZIP من IPQS – استخدم ip-api.com كبديل
             if not zipcode or zipcode == "-":
                 try:
                     fallback = requests.get(f"http://ip-api.com/json/{ip}", timeout=5).json()
@@ -164,7 +165,11 @@ def check_ip():
         except Exception:
             continue
 
-    return jsonify({"error": "All API keys failed"}), 503
+    send_telegram_message("🚫 <b>All IPQS keys failed</b>")
+    response = jsonify({"error": "All API keys failed or blocked"})
+    response.status_code = 503
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
