@@ -15,6 +15,7 @@
   <a href="#pricing">Pricing</a>
   <a href="#documentation">Documentation</a>
   <a href="#ziplookup">ZIP Lookup</a>
+  <a href="#emailCheck">Email Check</a>
 </nav>
 </header>
 <section class="hero">
@@ -86,6 +87,13 @@
   <div id="zipStreetsResult">
     📬 أدخل الرمز البريدي لعرض الشوارع...
   </div>
+</section>
+<section class="email-check-section" id="emailCheck">
+  <h2>📧 توليد وفحص الإيميل</h2>
+  <input id="firstName" type="text" placeholder="First Name (مثال: John)">
+  <input id="lastName" type="text" placeholder="Last Name (اختياري)">
+  <button onclick="generateAndCheckEmail()">إنشاء وفحص</button>
+  <div id="emailResult" style="margin-top: 10px; font-weight: bold;"></div>
 </section>
 <div id="copyToast" style="
   visibility: hidden;
@@ -197,6 +205,50 @@
         resultBox.innerHTML = "❌ حدث خطأ: " + err.message;
       });
   }
+</script>
+<script>
+function generateAndCheckEmail() {
+  const first = document.getElementById("firstName").value.trim().toLowerCase();
+  const last = document.getElementById("lastName").value.trim().toLowerCase();
+  const resultBox = document.getElementById("emailResult");
+
+  if (!first) {
+    resultBox.innerHTML = "❌ أدخل الاسم الأول على الأقل.";
+    return;
+  }
+
+  const patterns = [
+    `${first}${last}@gmail.com`,
+    `${first}.${last}@yahoo.com`,
+    `${first}_${last}@outlook.com`,
+    `${first}${Math.floor(Math.random() * 999)}@hotmail.com`
+  ];
+  const email = patterns[Math.floor(Math.random() * patterns.length)];
+
+  resultBox.innerHTML = `⏳ يتم فحص <b>${email}</b> ...`;
+
+  fetch(`/api/email-check?email=${encodeURIComponent(email)}`)
+    .then(res => res.json())
+    .then(data => {
+    let status = data.status || "unknown";
+    let message = "";
+
+    if (status === "deliverable") {
+      message = `✅ الإيميل صالح: <b>${email}</b>`;
+    } else if (status === "risky") {
+      message = `⚠️ الإيميل قابل للتوصيل ولكن غير مضمون: <b>${email}</b>`;
+    } else if (status === "undeliverable") {
+      message = `❌ الإيميل غير صالح: <b>${email}</b>`;
+    } else {
+      message = `❓ حالة غير معروفة: ${status} - <b>${email}</b>`;
+    }
+
+    resultBox.innerHTML = message;
+  })
+  .catch(err => {
+    resultBox.innerHTML = `⚠️ حدث خطأ أثناء الفحص.`;
+  });
+}
 </script>
 </body>
 </html>

@@ -38,6 +38,23 @@ def send_telegram_message(text):
     except:
         pass
 
+# ✅ Endpoint لفحص الإيميلات من الخادم
+@app.route("/api/email-check")
+def check_email():
+    email = request.args.get("email", "").strip()
+    if not email:
+        return jsonify({"error": "Missing email"}), 400
+
+    try:
+        resp = requests.get(
+            f"https://api.usebouncer.com/v1/email/verify?email={email}",
+            headers={"x-api-key": "QEeJBmOaAlIupqONEkpKBsWVYJlKF7mgKa8pMOv9"},
+            timeout=10
+        )
+        return jsonify(resp.json())
+    except Exception as e:
+        return jsonify({"error": "API Error", "details": str(e)}), 500
+
 # دالة استخراج عنوان حقيقي من ZIP
 def get_street_address_from_zip(zip_code, country_code="us"):
     try:
