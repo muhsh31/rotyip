@@ -187,7 +187,7 @@
             const addresses = streets.map(street => {
               const apt = Math.floor(Math.random() * 900) + 100;
               const full = `${apt} ${street}, ${city}, ${state} ${zip}`;
-              return `<li>${full} <button onclick=\"copyToClipboard('${full}')\">📋</button></li>`;
+              return `<li>${street} <button onclick=\"copyToClipboard('${full}')\">📋</button></li>`;
             });
             resultBox.innerHTML = `<p>✅ تم العثور على ${streets.length} عنوانًا:</p><ul style="columns: 2;">${addresses.join("")}</ul>`;
           }
