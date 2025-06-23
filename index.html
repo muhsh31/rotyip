@@ -114,11 +114,11 @@ function generateAndCheckEmail() {
   }
 
   const domains = ["gmail.com", "yahoo.com", "outlook.com"];
-  const base = last ? `${first}${last}` : `${first}`;
+  const base = last ? ${first}${last} : ${first};
   const number = Math.floor(Math.random() * 90) + 10; // رقم من رقمين
-  const email = `${base}${number}@${domains[Math.floor(Math.random() * domains.length)]}`;
+  const email = ${base}${number}@${domains[Math.floor(Math.random() * domains.length)]};
 
-  resultBox.innerHTML = `⏳ يتم فحص <b>${email}</b> ...`;
+  resultBox.innerHTML = ⏳ يتم فحص <b>${email}</b> ...;
   checkEmail(email, resultBox);
 }
 
@@ -131,31 +131,31 @@ function manualEmailCheck() {
     return;
   }
 
-  resultBox.innerHTML = `⏳ يتم فحص <b>${email}</b> ...`;
+  resultBox.innerHTML = ⏳ يتم فحص <b>${email}</b> ...;
   checkEmail(email, resultBox);
 }
 
 function checkEmail(email, resultBox) {
-  fetch(`https://rotyip.onrender.com/api/email-check?email=${encodeURIComponent(email)}`)
+  fetch(https://rotyip.onrender.com/api/email-check?email=${encodeURIComponent(email)})
     .then(res => res.json())
     .then(data => {
       let status = data.status || "unknown";
       let message = "";
 
       if (status === "deliverable") {
-        message = `✅ الإيميل صالح: <b>${email}</b>`;
+        message = ✅ الإيميل صالح: <b>${email}</b>;
       } else if (status === "risky") {
-        message = `⚠️ الإيميل قابل للتوصيل ولكن غير مضمون: <b>${email}</b>`;
+        message = ⚠️ الإيميل قابل للتوصيل ولكن غير مضمون: <b>${email}</b>;
       } else if (status === "undeliverable") {
-        message = `❌ الإيميل غير صالح: <b>${email}</b>`;
+        message = ❌ الإيميل غير صالح: <b>${email}</b>;
       } else {
-        message = `❓ حالة غير معروفة: ${status} - <b>${email}</b>`;
+        message = ❓ حالة غير معروفة: ${status} - <b>${email}</b>;
       }
 
       resultBox.innerHTML = message;
     })
     .catch(err => {
-      resultBox.innerHTML = `⚠️ حدث خطأ أثناء الفحص.`;
+      resultBox.innerHTML = ⚠️ حدث خطأ أثناء الفحص.;
     });
 }
 </script>
