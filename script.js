@@ -9,27 +9,27 @@ fetch('https://api.ipify.org?format=json')
       .then(response => response.json())
       .then(data => {
         let html = '';
-        html += <p><strong>IP:</strong> ${data.ip}</p>;
-        html += <p><strong>Country:</strong> ${data.country}</p>;
-        html += <p><strong>City:</strong> ${data.city}</p>;
+        html += `<p><strong>IP:</strong> ${data.ip}</p>`;
+        html += `<p><strong>Country:</strong> ${data.country}</p>`;
+        html += `<p><strong>City:</strong> ${data.city}</p>`;
 
         if (data.zipcode && data.zipcode !== "-") {
-          html += <p><strong>ZIP Code:</strong> ${data.zipcode}</p>;
+          html += `<p><strong>ZIP Code:</strong> ${data.zipcode}</p>`;
         } else {
-          html += <p><strong>ZIP Code:</strong> Not Available</p>;
+          html += `<p><strong>ZIP Code:</strong> Not Available</p>`;
         }
 
         if (data.street_address && data.street_address !== "Not Available") {
-          html += <p><strong>Address:</strong> ${data.street_address}</p>;
+          html += `<p><strong>Address:</strong> ${data.street_address}</p>`;
         } else {
-          html += <p><strong>Address:</strong> Not Available</p>;
+          html += `<p><strong>Address:</strong> Not Available</p>`;
         }
 
         if (data.fraud_score !== undefined) {
-          html += <p><strong>Score:</strong> ${data.fraud_score}</p>;
+          html += `<p><strong>Score:</strong> ${data.fraud_score}</p>`;
         }
 
-        html += <p><strong>Threat Level:</strong> ${data.threat_level}</p>;
+        html += `<p><strong>Threat Level:</strong> ${data.threat_level}</p>`;
         
         const box = document.querySelector(".result-box");
         if (box) {
