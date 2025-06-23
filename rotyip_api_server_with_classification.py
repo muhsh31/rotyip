@@ -1,176 +1,146 @@
-import requests
-from alert_telegram_rotyip import send_alert
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from datetime import datetime
-import itertools
-import os
-import random
+<nav>
+  <a href="#about">About</a>
+  <a href="#pricing">Pricing</a>
+  <a href="#documentation">Documentation</a>
+  <a href="#ziplookup">ZIP Lookup</a>
+  <a href="#emailCheck">Email Check</a>
+</nav>
+</header>
+<section class="hero">
+  <div class="hero-text">
+    <h1>IP Geolocation and Threat Intelligence API</h1>
+    <p>Lookup the location and threat profile of any IP Address to localize your website content, analyze logs, enrich forms, enforce GDPR compliance, block threats and more.</p>
+    <div class="buttons">
+      <a class="btn-primary" href="#pricing">Get Started</a>
+      <a class="btn-secondary" href="#documentation">Documentation</a>
+    </div>
+  </div>
+  <div class="result-box">
+    <div class="result-item">IP: <span id="ip">-</span></div>
+    <div class="result-item">Country: <span id="country">-</span></div>
+    <div class="result-item">City: <span id="city">-</span></div>
+    <div class="result-item">Time Zone: <span id="timezone">-</span></div>
+    <div class="result-item">Threat Level: <span id="threat">-</span></div>
+  </div>
 
-app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+  <div class="email-check-inline" id="emailCheck">
+    <h2>📧 توليد وفحص الإيميل</h2>
+    <input id="firstName" type="text" placeholder="First Name (مثال: John)">
+    <input id="lastName" type="text" placeholder="Last Name (اختياري)">
+    <button onclick="generateAndCheckEmail()">🎲 إنشاء وفحص</button>
+    <input id="manualEmail" type="email" placeholder="أو أدخل إيميل يدويًا هنا">
+    <button onclick="manualEmailCheck()">🔍 فحص يدوي</button>
+    <div id="emailResult"></div>
+  </div>
 
-@app.after_request
-def apply_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
-    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
-    return response
+  <div class="zip-lookup-inline" id="ziplookup">
+    <h2>🏠 البحث عن الشوارع حسب ZIP</h2>
+    <input id="zipInput" type="text" placeholder="أدخل ZIP Code مثل 30301" />
+    <button onclick="lookupZipStreets()">بحث</button>
+    <div id="zipCityState"></div>
+    <div class="zip-result-box" id="zipStreetsResult">📬 أدخل الرمز البريدي لعرض الشوارع...</div>
+  </div>
+</section>
 
-IPQS_KEYS = [
-    "dgHCQ0L7RO4zy5ER6lqbjIQhQZHIkSw0",
-    "D4tu8VKYrdeM9hEVB6z3y3LUldTQhSgH",
-    "EfSNh7a0Uvyyg98zyXAqZ8QcxLSm0Rz5",
-    "Ty6TTD8QCiJONHbfgSV7w2NvTQClYjRc"
-]
-KEYS = itertools.cycle(IPQS_KEYS)
+<script>
+// استرجاع بيانات IP تلقائياً
+fetch('https://api.ipify.org?format=json')
+  .then(res => res.json())
+  .then(ipData => {
+    const userIP = ipData.ip;
+    fetch('https://rotyip.onrender.com/api/check?ip=' + userIP)
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("ip").textContent = data.ip || "-";
+        document.getElementById("country").textContent = data.country || "-";
+        document.getElementById("city").textContent = data.city || "-";
+        document.getElementById("timezone").textContent = data.timezone || "-";
+        document.getElementById("threat").textContent = data.threat_level || "-";
+      });
+  })
+  .catch(error => {
+    console.error("Auto IP lookup failed:", error);
+  });
 
-ip_cache = {}
+function lookupZipStreets() {
+  const zip = document.getElementById("zipInput").value.trim();
+  if (!zip) return;
 
-TELEGRAM_TOKEN = "7682246390:AAFRw4n3DA8FPjmfPs3ndo6OrUlIWR4Odg0"
-CHAT_ID = "-1002612909844"
+  document.getElementById("zipStreetsResult").innerHTML = "⏳ يتم البحث ...";
 
-def send_telegram_message(text):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": CHAT_ID,
-        "text": text,
-        "parse_mode": "HTML"
-    }
-    try:
-        requests.post(url, data=payload, timeout=5)
-    except:
-        pass
+  fetch(`https://rotyip.onrender.com/api/check?ip=8.8.8.8&zip=${zip}`)
+    .then(res => res.json())
+    .then(data => {
+      let result = "";
+      if (data.street_address && data.street_address !== "Not Available") {
+        result = `<p><strong>عنوان تقريبي:</strong> ${data.street_address}</p><button onclick="copyToClipboard(\"${data.street_address}\")">📂 نسخ</button>`;
+      } else {
+        result = "⚠️ لا يوجد عنوان متاح";
+      }
+      document.getElementById("zipStreetsResult").innerHTML = result;
+    })
+    .catch(() => {
+      document.getElementById("zipStreetsResult").innerHTML = "❌ حدث خطأ";
+    });
+}
 
-@app.route("/api/email-check")
-def check_email():
-    email = request.args.get("email", "").strip()
-    if not email:
-        return jsonify({"error": "Missing email"}), 400
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById("copyToast");
+    toast.style.visibility = "visible";
+    setTimeout(() => {
+      toast.style.visibility = "hidden";
+    }, 2000);
+  });
+}
+</script>
 
-    try:
-        resp = requests.get(
-            f"https://api.usebouncer.com/v1/email/verify?email={email}",
-            headers={"x-api-key": "QEeJBmOaAlIupqONEkpKBsWVYJlKF7mgKa8pMOv9"},
-            timeout=10
-        )
-        return jsonify(resp.json())
-    except Exception as e:
-        return jsonify({"error": "API Error", "details": str(e)}), 500
-
-def get_street_address_from_zip(zip_code, country_code="us"):
-    try:
-        zip_resp = requests.get(f"https://api.zippopotam.us/{country_code}/{zip_code}", timeout=5)
-        if zip_resp.status_code != 200:
-            return None
-
-        zip_data = zip_resp.json()
-        lat = zip_data["places"][0]["latitude"]
-        lon = zip_data["places"][0]["longitude"]
-        city = zip_data["places"][0]["place name"]
-        state = zip_data["places"][0]["state abbreviation"]
-        country = zip_data["country"]
-
-        query = f"""
-        [out:json];
-        way(around:1500,{lat},{lon})["highway"];
-        out tags;
-        """
-        overpass_url = "https://overpass-api.de/api/interpreter"
-        resp = requests.post(overpass_url, data={"data": query}, timeout=10)
-        if resp.status_code != 200:
-            return None
-
-        results = resp.json()
-        street_names = list({
-            el["tags"]["name"]
-            for el in results["elements"]
-            if "tags" in el and "name" in el["tags"]
-        })
-
-        if not street_names:
-            return None
-
-        street = random.choice(street_names)
-        number = random.randint(100, 999)
-        return f"{number} {street}, {city}, {state} {zip_code}, {country}"
-
-    except Exception:
-        return None
-
-@app.route("/api/check")
-def check_ip():
-    ip = request.args.get("ip", "").strip()
-    if not ip:
-        return jsonify({"error": "Missing IP"}), 400
-
-    if ip in ip_cache:
-        return jsonify(ip_cache[ip])
-
-    for _ in range(len(IPQS_KEYS)):
-        key = next(KEYS)
-        try:
-            url = f"https://ipqualityscore.com/api/json/ip/{key}/{ip}"
-            response = requests.get(url, timeout=8)
-            data = response.json()
-
-            if not data.get("success", True):
-                if "limit" in data.get("message", "").lower():
-                    send_telegram_message(f"🚫 <b>IPQS API Blocked</b>\nKey ending in ...{key[-4:]}")
-                    continue
-
-            score = int(data.get("fraud_score", 0))
-            threat_level = "clean"
-            if score > 50:
-                threat_level = "dangerous"
-            elif score > 27:
-                threat_level = "suspicious"
-
-            zipcode = data.get("zipcode", "-")
-
-            if not zipcode or zipcode == "-":
-                try:
-                    fallback = requests.get(f"http://ip-api.com/json/{ip}", timeout=5).json()
-                    zipcode = fallback.get("zip", "-")
-                except:
-                    pass
-
-            street_address = get_street_address_from_zip(zipcode)
-
-            result = {
-                "ip": ip,
-                "country": data.get("country_code", "-"),
-                "city": data.get("city", "-"),
-                "zipcode": zipcode,
-                "timezone": data.get("timezone", "-"),
-                "isp": data.get("ISP", "-"),
-                "threat_level": threat_level,
-                "fraud_score": score,
-                "proxy": data.get("proxy", False),
-                "vpn": data.get("vpn", False),
-                "tor": data.get("tor", False),
-                "connection_type": data.get("connection_type", "-"),
-                "organization": data.get("organization", "-"),
-                "datetime": datetime.utcnow().isoformat(),
-                "street_address": street_address or "Not Available"
-            }
-
-            ip_cache[ip] = result
-
-            if threat_level in ["suspicious", "dangerous"]:
-                send_alert(ip, data, threat_level)
-
-            return jsonify(result)
-
-        except Exception:
-            continue
-
-    send_telegram_message("🚫 <b>All IPQS keys failed</b>")
-    response = jsonify({"error": "All API keys failed or blocked"})
-    response.status_code = 503
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    return response
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+<section class="doc-section" id="documentation">
+  <h2>Documentation</h2>
+  <p>To get started, make a GET request to the following endpoint:</p>
+  <p><code>https://api.rotyip.com/v1/ip/{ip-address}</code></p>
+  <p>Replace <code>{ip-address}</code> with a valid IPv4 or IPv6 address.</p>
+  <p><strong>Response Example:</strong></p>
+  <pre><code>{
+  "ip": "8.8.8.8",
+  "country": "United States",
+  "city": "New York",
+  "timezone": "America/New_York",
+  "threat_level": "low"
+}</code></pre>
+  <p>You can also use the API without authentication for basic usage. For extended usage, consider our paid plans (see <a href="#pricing">Pricing</a>).</p>
+</section>
+<section class="pricing-section" id="pricing">
+  <h2>Pricing</h2>
+  <p>Choose the plan that fits your needs. No hidden fees.</p>
+  <div class="pricing-cards">
+    <div class="card">
+      <h3>Free</h3>
+      <p class="price">$0/mo</p>
+      <p>Up to 200 requests/day<br/>Basic geolocation<br/>No API key required</p>
+    </div>
+    <div class="card">
+      <h3>Pro</h3>
+      <p class="price">$19/mo</p>
+      <p>Up to 10,000 requests/day<br/>Full threat analysis<br/>Email support</p>
+    </div>
+    <div class="card">
+      <h3>Enterprise</h3>
+      <p class="price">Contact Us</p>
+      <p>Unlimited usage<br/>Custom SLAs<br/>Priority support<br/>Dedicated IPs</p>
+    </div>
+  </div>
+</section>
+<section class="about-section" id="about">
+  <h2>About Rotyip</h2>
+  <p>Rotyip is a lightweight IP intelligence platform designed to provide accurate geolocation and threat detection in real-time.</p>
+  <p>Our mission is to help developers, analysts, and security teams make informed decisions by giving them fast and reliable access to IP data.</p>
+  <p>Whether you're protecting your application, customizing content, or analyzing traffic, Rotyip delivers the data you need with minimal setup.</p>
+  <p>We value simplicity, speed, and privacy – and we are committed to continuous improvement.</p>
+</section>
+<div id="copyToast" style="visibility: hidden;min-width: 220px;background-color: #333;color: #fff;text-align: center;border-radius: 8px;padding: 10px;position: fixed;z-index: 9999;left: 50%;bottom: 30px;transform: translateX(-50%);font-size: 14px;box-shadow: 0 0 8px rgba(0,0,0,0.3);">
+  ✅ تم نسخ العنوان إلى الحافظة
+</div>
+<footer>
+  © 2025 rotyip.com — All rights reserved.
+</footer>
